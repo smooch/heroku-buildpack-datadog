@@ -30,6 +30,8 @@ APT_OPTIONS="-o debug::nolocking=true -o Dir::Etc::Trusted=$GPG_KEYRING_FILE -o 
 # Where the Agent is installed & configured
 DD_AGENT_ROOT="$APT_BUILD_DIR"
 DD_AGENT_CONF="$DD_AGENT_ROOT/opt/datadog-agent/agent/datadog.conf"
+DD_AGENT_CONFD="$DD_AGENT_ROOT/opt/datadog-agent/agent/conf.d"
+DD_AGENT_CHECKSD="$DD_AGENT_ROOT/opt/datadog-agent/agent/checks.d"
 DD_LOG_DIR="/tmp/logs/datadog"
 
 # Ensure directories exists
@@ -58,10 +60,30 @@ DEB=$(ls -t $APT_CACHE_DIR/archives/*.deb | head -n 1)
 topic "Installing $(basename $DEB)"
 dpkg -x $DEB $BUILD_DIR/.apt/
 
+# move dd-agent configuration files
+mkdir -p $DD_AGENT_CONFD
 mv $DD_AGENT_ROOT/etc/dd-agent/datadog.conf.example $DD_AGENT_CONF
+mv $DD_AGENT_ROOT/etc/dd-agent/conf.d/* $DD_AGENT_CONFD/
+
+# fix disk stats for Heroku
+mv $BUILDPACK_DIR/checks.d/disk.py $DD_AGENT_CHECKSD/
+
+# enable CPU/system checks
+mv $DD_AGENT_CONFD/system_core.yaml.example $DD_AGENT_CONFD/system_core.yaml
+mv $DD_AGENT_CONFD/system_swap.yaml.example $DD_AGENT_CONFD/system_swap.yaml
+mv $DD_AGENT_CONFD/agent_metrics.yaml.default $DD_AGENT_CONFD/agent_metrics.yaml
+
+
+# add any tags
+if test $DD_TAGS; then
+  echo "tags: $DD_TAGS" >> $DD_AGENT_CONF
+fi
 
 # Turn off syslog
 sed -i -e"s/^.*log_to_syslog:.*$/log_to_syslog: no/" $DD_AGENT_CONF
+
+# Set log verbosity to warn
+sed -i -e"s/^# log_level:.*$/log_level: WARNING/" $DD_AGENT_CONF
 
 # Fix log locations
 sed -i -e"s|^.*collector_log_file:.*$|collector_log_file: $DD_LOG_DIR/collector.log|" $DD_AGENT_CONF
