@@ -15,10 +15,10 @@ fi
 
 # Prefered Datadog env var name
 if [[ $DD_HOSTNAME ]]; then
-  sed -i -e "s/^[# ]*hostname:.*$/hostname: ${DD_HOSTNAME}/" $DD_AGENT_CONF
+  sed -i -e "s/^[# ]*hostname:.*$/hostname: ${DD_HOSTNAME}-${DYNO}/" $DD_AGENT_CONF
 # Legacy env var support
 elif [[ $HEROKU_APP_NAME ]]; then
-  sed -i -e "s/^[# ]*hostname:.*$/hostname: ${HEROKU_APP_NAME}/" $DD_AGENT_CONF
+  sed -i -e "s/^[# ]*hostname:.*$/hostname: ${HEROKU_APP_NAME}-${DYNO}/" $DD_AGENT_CONF
 else
   echo "DD_HOSTNAME environment variable not set. Run: heroku config:set DD_HOSTNAME=$(heroku apps:info|grep ===|cut -d' ' -f2)"
   DISABLE_DATADOG_AGENT=1
@@ -48,8 +48,13 @@ sed -i -e "s/^[# ]*developer_mode:.*$/developer_mode: yes/" $DD_AGENT_CONF
     unset PYTHONHOME PYTHONPATH
     # Load our library path first when starting up
     export LD_LIBRARY_PATH=/app/.apt/opt/datadog-agent/embedded/lib:$LD_LIBRARY_PATH
+    # Add datadog embedded bin to path for iostat and mpstat
+    export PATH=$PATH:/app/.apt/opt/datadog-agent/embedded/bin/
+
     mkdir -p /tmp/logs/datadog
-    exec /app/.apt/opt/datadog-agent/embedded/bin/python /app/.apt/opt/datadog-agent/agent/dogstatsd.py start
+    /app/.apt/opt/datadog-agent/embedded/bin/python /app/.apt/opt/datadog-agent/agent/ddagent.py &
+    /app/.apt/opt/datadog-agent/embedded/bin/python /app/.apt/opt/datadog-agent/agent/dogstatsd.py start --use-local-forwarder &
+    /app/.apt/opt/datadog-agent/embedded/bin/python /app/.apt/opt/datadog-agent/agent/agent.py start --use-local-forwarder &
   fi
 )
 
