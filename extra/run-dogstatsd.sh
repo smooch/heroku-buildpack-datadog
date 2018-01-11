@@ -24,6 +24,11 @@ else
   DISABLE_DATADOG_AGENT=1
 fi
 
+# match ignored hosts and disable agent
+if [[ $DD_IGNORE_HOST ]] && [[ $DYNO == *"$DD_IGNORE_HOST"* ]]; then
+  echo "$DD_IGNORE_HOST set to be ignored, disabling datadog agent"
+  DISABLE_DATADOG_AGENT=1
+fi
 
 if [[ $DD_APM_ENABLED ]]; then
   sed -i -e "s/^[# ]*apm_enabled:.*$/apm_enabled: true/" $DD_AGENT_CONF
