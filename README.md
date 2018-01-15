@@ -52,6 +52,7 @@ In addition to the environment variables shown above, there are a number of othe
 | DD_APM_ENABLED | *Optional.* When set, this will start the Datadog Trace agent. |
 | DD_SERVICE_NAME | *Optional.* While not read directly by the Datadog Trace agent, we highly recommend that you set an environment variable for your service name. See the [Service Name](#service-name) section below for more information. |
 | DD_SERVICE_ENV | *Optional.* The Datadog Trace agent will automatically try to identify your environment by searching for a tag in the form `env:<your environment name>`. If you do not set a tag or wish to override an exsting tag, you can set the environment with this setting. For more information, see the [Datadog Tracing environments] page. |
+| DD_IGNORE_HOST | *Optional.* Disable datadog agent on matching hosts. For example, it can be useful to ignore Heroku `scheduler` that are launched |
 
 ### Histogram percentiles
 
