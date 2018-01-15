@@ -1,5 +1,9 @@
 #!/bin/bash
 
+function print_stdout () {
+  echo "buildpack=dd-agent - $*"
+}
+
 DD_AGENT_CONF="/app/.apt/opt/datadog-agent/agent/datadog.conf"
 
 # Prefered Datadog env var name
@@ -9,7 +13,7 @@ if [[ $DD_API_KEY ]]; then
 elif [[ $DATADOG_API_KEY ]]; then
   sed -i -e "s/^[# ]*api_key:.*$/api_key: ${DATADOG_API_KEY}/" $DD_AGENT_CONF
 else
-  echo "DD_API_KEY environment variable not set. Run: heroku config:add DD_API_KEY=<your API key>"
+  print_stdout "DD_API_KEY environment variable not set. Run: heroku config:add DD_API_KEY=<your API key>"
   DISABLE_DATADOG_AGENT=1
 fi
 
@@ -20,13 +24,13 @@ if [[ $DD_HOSTNAME ]]; then
 elif [[ $HEROKU_APP_NAME ]]; then
   sed -i -e "s/^[# ]*hostname:.*$/hostname: ${HEROKU_APP_NAME}-${DYNO}/" $DD_AGENT_CONF
 else
-  echo "DD_HOSTNAME environment variable not set. Run: heroku config:set DD_HOSTNAME=$(heroku apps:info|grep ===|cut -d' ' -f2)"
+  print_stdout "DD_HOSTNAME environment variable not set. Run: heroku config:set DD_HOSTNAME=$(heroku apps:info|grep ===|cut -d' ' -f2)"
   DISABLE_DATADOG_AGENT=1
 fi
 
 # match ignored hosts and disable agent
 if [[ $DD_IGNORE_HOST ]] && [[ $DYNO == *"$DD_IGNORE_HOST"* ]]; then
-  echo "$DD_IGNORE_HOST set to be ignored, disabling datadog agent"
+  print_stdout "$DD_IGNORE_HOST set to be ignored, disabling datadog agent"
   DISABLE_DATADOG_AGENT=1
 fi
 
@@ -47,7 +51,7 @@ sed -i -e "s/^[# ]*developer_mode:.*$/developer_mode: yes/" $DD_AGENT_CONF
 
 (
   if [[ $DISABLE_DATADOG_AGENT ]]; then
-    echo "DISABLE_DATADOG_AGENT environment variable is set, not starting the agent."
+    print_stdout "DISABLE_DATADOG_AGENT environment variable is set, not starting the agent."
   else
     # Unset other PYTHONPATH/PYTHONHOME variables before we start
     unset PYTHONHOME PYTHONPATH
@@ -65,7 +69,7 @@ sed -i -e "s/^[# ]*developer_mode:.*$/developer_mode: yes/" $DD_AGENT_CONF
 
 (
   if [[ $DISABLE_DATADOG_AGENT ]]; then
-    echo "DISABLE_DATADOG_AGENT environment variable is set, not starting the tracing agent."
+    print_stdout "DISABLE_DATADOG_AGENT environment variable is set, not starting the tracing agent."
   else
     # Enable the trace agent
     if [[ $DD_APM_ENABLED ]]; then
