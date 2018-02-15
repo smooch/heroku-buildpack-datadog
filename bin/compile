@@ -52,7 +52,7 @@ apt-get $APT_OPTIONS update | indent
 
 # Installing the Datadog Trace Agent will also install the Datadog Agent.
 topic "Fetching Datadog Agent and Trace Agent"
-apt-get $APT_OPTIONS -y --force-yes -d install --reinstall --no-install-recommends datadog-agent | indent
+apt-get $APT_OPTIONS -y --force-yes -d install --reinstall --no-install-recommends datadog-agent=1:5.21.2-1 | indent
 
 # Install the latest agent package.
 topic "Fetching deb packages"
